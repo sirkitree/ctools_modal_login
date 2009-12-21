@@ -1,0 +1,6 @@
+; $Id: $
+name = Chaos tools modal login
+description = Login through the ctools modal window.
+core = 6.x
+package = Chaos tool suite
+dependencies[] = ctools

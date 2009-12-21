@@ -1,0 +1,98 @@
+<?php
+/**
+ * Implementation of hook_menu().
+ */
+function ctools_modal_login_menu() {  
+  $items['user/login/%ctools_js'] = array(
+    'page callback' => 'ctools_modal_login_ajax',
+    'page arguments' => array(1, 2),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['user/register/%ctools_js'] = array(
+    'page callback' => 'ctools_modal_login_ajax',
+    'page arguments' => array(1, 2),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+/**
+ * Menu callback for our ajax links.
+ */
+function ctools_modal_login_ajax($type, $js) {
+  switch ($type) {
+    case 'login':
+      $title = t('Login');
+      $form_id = 'user_login';
+      $msg = 'You are now logged in.';
+      break;
+    case 'register':
+      $title = t('Register');
+      $form_id = 'user_register';
+      $msg = 'You are now registered.';
+      break;
+  }
+  if ($js) {
+    ctools_include('modal');
+    ctools_include('ajax');
+    $form_state = array(
+      'ajax' => TRUE,
+      'title' => $title,
+    );
+    $commands = array();
+    $commands = ctools_modal_form_wrapper($form_id, $form_state);
+    if (empty($commands)) {
+      $commands[] = array('command' => 'reload');
+    }
+    ctools_ajax_render($commands);
+  }
+  else {
+    return drupal_get_form($form_id);
+  }
+}
+
+/**
+ * Implementation of hook_block().
+ * Generates the block similar to the user login block.
+ */
+function ctools_modal_login_block($op = 'list', $delta = 0, $edit = array()) {
+  global $user;
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info'] = t('Ctools User login');
+      // Not worth caching.
+      $blocks[0]['cache'] = BLOCK_NO_CACHE;
+      break;
+    case 'view':
+      if (!$user->uid) {
+        // add our ctools js
+        ctools_include('modal');
+        ctools_modal_add_js();
+        $blocks = array(
+          'subject' => t('User login'),
+          'content' => theme('ctools_modal_login'),
+        );
+      }
+      break;
+  }
+  return $blocks;
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function ctools_modal_login_theme() {
+  return array(
+    'ctools_modal_login' => array(),
+  );
+}
+
+function theme_ctools_modal_login() {
+  $links[] = l(t('Login'), 'user/login/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  $links[] = l(t('Register'), 'user/register/nojs', array('attributes' => array('class' => 'ctools-use-modal')));
+  return theme('item_list', $links);
+}
